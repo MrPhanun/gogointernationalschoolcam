@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GO-GO International School — Where Little Minds Grow</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a href="index.html" class="brand"><span class="brand-badge">🎈</span> GO-GO International School</a>
+      <div class="nav-right">
+        <ul class="nav-links">
+          <li><a href="index.html" data-page="index.html" data-i18n="nav.home">Home</a></li>
+          <li><a href="about.html" data-page="about.html" data-i18n="nav.about">About</a></li>
+          <li><a href="programs.html" data-page="programs.html" data-i18n="nav.programs">Programs</a></li>
+          <li><a href="gallery.html" data-page="gallery.html" data-i18n="nav.gallery">Gallery</a></li>
+          <li><a href="staff.html" data-page="staff.html" data-i18n="nav.staff">Staff</a></li>
+          <li><a href="contact.html" data-page="contact.html" data-i18n="nav.contact">Contact</a></li>
+          <li><a href="admin/login.html" class="btn" data-i18n="nav.adminLogin">Admin Login</a></li>
+        </ul>
+        <div class="nav-controls">
+          <button class="icon-toggle-btn" data-theme-toggle onclick="toggleTheme()" aria-label="Toggle dark mode">🌙</button>
+          <button class="icon-toggle-btn" data-lang-toggle onclick="toggleLang()">ខ្មែរ</button>
+        </div>
+        <button class="nav-toggle" aria-label="Toggle navigation">☰</button>
+      </div>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="hero-text">
+        <span class="eyebrow" data-i18n="home.eyebrow">🌟 Enrolling now for 2026</span>
+        <h1 data-i18n="home.title">Where little minds grow, play &amp; shine!</h1>
+        <p data-i18n="home.desc">GO-GO International School blends joyful play with purposeful learning, helping every child build confidence, curiosity, and lifelong friendships.</p>
+        <div class="hero-actions">
+          <a href="contact.html" class="btn btn-primary" data-i18n="home.enrollBtn">Enroll Your Child</a>
+          <a href="programs.html" class="btn btn-outline" data-i18n="home.exploreBtn">Explore Programs</a>
+        </div>
+      </div>
+      <div class="hero-art">
+        <div class="blob-card">🧒🎨</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats-strip">
+    <div class="container grid grid-4">
+      <div>
+        <div class="stat-num">15+</div>
+        <div class="stat-label" data-i18n="home.statYearsLabel">Years of Care</div>
+      </div>
+      <div>
+        <div class="stat-num">300+</div>
+        <div class="stat-label" data-i18n="home.statStudentsLabel">Happy Students</div>
+      </div>
+      <div>
+        <div class="stat-num">20+</div>
+        <div class="stat-label" data-i18n="home.statTeachersLabel">Passionate Teachers</div>
+      </div>
+      <div>
+        <div class="stat-num">3</div>
+        <div class="stat-label" data-i18n="home.statProgramsLabel">Age Programs</div>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow" data-i18n="home.whyEyebrow">Why Families Choose Us</span>
+        <h2 data-i18n="home.whyTitle">A safe, joyful place to learn and grow</h2>
+      </div>
+      <div class="grid grid-3">
+        <div class="card">
+          <div class="icon-circle bg-yellow">🧩</div>
+          <h3 data-i18n="home.feature1Title">Play-Based Learning</h3>
+          <p data-i18n="home.feature1Desc">Hands-on activities that build curiosity, motor skills, and early literacy through play.</p>
+        </div>
+        <div class="card">
+          <div class="icon-circle bg-blue">🛡️</div>
+          <h3 data-i18n="home.feature2Title">Safe &amp; Nurturing</h3>
+          <p data-i18n="home.feature2Desc">Secure campus, small class sizes, and caring teachers who know every child by name.</p>
+        </div>
+        <div class="card">
+          <div class="icon-circle bg-coral">🌍</div>
+          <h3 data-i18n="home.feature3Title">International Curriculum</h3>
+          <p data-i18n="home.feature3Desc">A globally-minded program that celebrates languages, cultures, and creativity.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="background:var(--blue-light);">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow" data-i18n="home.announceEyebrow">Latest Announcements</span>
+        <h2 data-i18n="home.announceTitle">What's happening at GO-GO</h2>
+      </div>
+      <div id="announcement-list" class="grid" style="max-width:760px;margin:0 auto;">
+        <p data-i18n="home.announceLoading">Loading announcements…</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="cta-band">
+        <h2 data-i18n="home.ctaTitle">Ready to join the GO-GO family?</h2>
+        <p data-i18n="home.ctaDesc">Book a campus tour or send us your questions — we'd love to meet you and your child.</p>
+        <a href="contact.html" class="btn btn-primary" data-i18n="home.ctaBtn">Get in Touch</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="brand" style="color:#fff;"><span class="brand-badge">🎈</span> GO-GO International School</div>
+          <p data-i18n="footer.tagline">A joyful place where curious minds grow, play, and learn together.</p>
+        </div>
+        <div>
+          <h4 data-i18n="footer.quickLinks">Quick Links</h4>
+          <ul style="list-style:none;padding:0;">
+            <li><a href="about.html" data-i18n="footer.aboutUs">About Us</a></li>
+            <li><a href="programs.html" data-i18n="footer.programsLink">Programs</a></li>
+            <li><a href="gallery.html" data-i18n="footer.galleryLink">Gallery</a></li>
+            <li><a href="contact.html" data-i18n="footer.contactLink">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 data-i18n="footer.contactHeading">Contact</h4>
+          <ul style="list-style:none;padding:0;">
+            <li>📍 <span data-i18n="footer.address">123 Rainbow Lane, Sunshine City</span></li>
+            <li>📞 (555) 123-4567</li>
+            <li>✉️ hello@gogoschool.edu</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom" data-i18n="footer.copyright">&copy; 2026 GO-GO International School. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <script src="js/theme.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

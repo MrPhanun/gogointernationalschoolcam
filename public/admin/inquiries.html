@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enrollment Inquiries — GO-GO Admin</title>
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <div class="topbar">
+        <h1 data-i18n="inquiries.title">Enrollment Inquiries</h1>
+      </div>
+
+      <div class="panel">
+        <div id="table-wrap">
+          <div class="empty-state" data-i18n="inquiries.loading">Loading inquiries…</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/theme.js"></script>
+  <script src="../js/i18n.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    let inquiries = [];
+
+    (async () => {
+      const user = await requireAuth();
+      if (!user) return;
+      renderSidebar('inquiries.html', user);
+      await loadInquiries();
+      window.onLangChange = loadInquiries;
+    })();
+
+    async function loadInquiries() {
+      const wrap = document.getElementById('table-wrap');
+      try {
+        inquiries = (await api('/api/inquiries')).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+        if (!inquiries.length) {
+          wrap.innerHTML = `<div class="empty-state"><div class="emoji">✉️</div>${t('inquiries.empty')}</div>`;
+          return;
+        }
+        wrap.innerHTML = `
+          <table>
+            <thead><tr><th>${t('inquiries.thParent')}</th><th>${t('inquiries.thContact')}</th><th>${t('inquiries.thChildAge')}</th><th>${t('inquiries.thMessage')}</th><th>${t('inquiries.thReceived')}</th><th>${t('inquiries.thStatus')}</th><th></th></tr></thead>
+            <tbody>
+              ${inquiries.map((i) => `
+                <tr>
+                  <td><strong>${escapeHtml(i.parentName)}</strong></td>
+                  <td>${escapeHtml(i.email)}<br/><span style="color:var(--text);font-size:0.82rem;">${escapeHtml(i.phone || '')}</span></td>
+                  <td>${escapeHtml(i.childAge || '—')}</td>
+                  <td style="max-width:280px;">${escapeHtml(i.message)}</td>
+                  <td>${formatDate(i.submittedAt)}</td>
+                  <td><span class="badge ${i.status === 'new' ? 'badge-yellow' : 'badge-green'}">${i.status === 'new' ? t('inquiries.statusNew') : t('inquiries.statusReviewed')}</span></td>
+                  <td>
+                    <div class="row-actions">
+                      ${i.status === 'new' ? `<button class="icon-btn" title="Mark Reviewed" onclick="markReviewed(${i.id})">✅</button>` : ''}
+                      <button class="icon-btn danger" title="Delete" onclick="deleteInquiry(${i.id})">🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch (err) {
+        wrap.innerHTML = `<div class="empty-state">${t('inquiries.loadError')}</div>`;
+      }
+    }
+
+    async function markReviewed(id) {
+      try {
+        await api(`/api/inquiries/${id}`, { method: 'PUT', body: { status: 'reviewed' } });
+        showToast(t('inquiries.toastReviewed'));
+        await loadInquiries();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    async function deleteInquiry(id) {
+      if (!confirm(t('inquiries.confirmDelete'))) return;
+      try {
+        await api(`/api/inquiries/${id}`, { method: 'DELETE' });
+        showToast(t('inquiries.toastDeleted'));
+        await loadInquiries();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+  </script>
+</body>
+</html>

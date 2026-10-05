@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fees — GO-GO Admin</title>
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <div class="topbar">
+        <h1 data-i18n="fees.title">Fees</h1>
+        <button class="btn btn-primary" id="add-btn" data-i18n="fees.addBtn">+ Add Fee Record</button>
+      </div>
+
+      <div class="panel">
+        <div id="table-wrap">
+          <div class="empty-state" data-i18n="fees.loading">Loading fee records…</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="fee-modal">
+    <div class="modal">
+      <h3 id="modal-title" data-i18n="fees.modalAddTitle">Add Fee Record</h3>
+      <form id="fee-form">
+        <input type="hidden" id="fee-id" />
+        <div class="form-row">
+          <label for="studentId" data-i18n="fees.labelStudent">Student</label>
+          <select id="studentId" required></select>
+        </div>
+        <div class="form-row">
+          <label for="term" data-i18n="fees.labelTerm">Term</label>
+          <input type="text" id="term" data-i18n-placeholder="fees.placeholderTerm" placeholder="e.g. Term 1 - 2026" required />
+        </div>
+        <div class="form-row">
+          <label for="amount" data-i18n="fees.labelAmount">Amount ($)</label>
+          <input type="number" id="amount" min="0" step="0.01" required />
+        </div>
+        <div class="form-row">
+          <label for="dueDate" data-i18n="fees.labelDueDate">Due Date</label>
+          <input type="date" id="dueDate" required />
+        </div>
+        <div class="form-row">
+          <label for="status" data-i18n="fees.labelStatus">Status</label>
+          <select id="status">
+            <option value="unpaid" data-i18n="fees.statusUnpaid">Unpaid</option>
+            <option value="paid" data-i18n="fees.statusPaid">Paid</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" onclick="closeModal('fee-modal')" data-i18n="common.cancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" data-i18n="common.saveBtn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/theme.js"></script>
+  <script src="../js/i18n.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    let fees = [];
+    let students = [];
+
+    (async () => {
+      const user = await requireAuth();
+      if (!user) return;
+      renderSidebar('fees.html', user);
+      students = await api('/api/students');
+      document.getElementById('studentId').innerHTML = students.map((s) => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+      await loadFees();
+      window.onLangChange = loadFees;
+    })();
+
+    function studentName(id) {
+      const s = students.find((s) => s.id === Number(id));
+      return s ? s.name : '—';
+    }
+
+    async function loadFees() {
+      const wrap = document.getElementById('table-wrap');
+      try {
+        fees = await api('/api/fees');
+        if (!fees.length) {
+          wrap.innerHTML = `<div class="empty-state"><div class="emoji">💰</div>${t('fees.empty')}</div>`;
+          return;
+        }
+        wrap.innerHTML = `
+          <table>
+            <thead><tr><th>${t('fees.thStudent')}</th><th>${t('fees.thTerm')}</th><th>${t('fees.thAmount')}</th><th>${t('fees.thDueDate')}</th><th>${t('fees.thStatus')}</th><th></th></tr></thead>
+            <tbody>
+              ${fees.map((f) => `
+                <tr>
+                  <td><strong>${escapeHtml(studentName(f.studentId))}</strong></td>
+                  <td>${escapeHtml(f.term)}</td>
+                  <td>$${Number(f.amount).toFixed(2)}</td>
+                  <td>${formatDate(f.dueDate)}</td>
+                  <td><span class="badge ${f.status === 'paid' ? 'badge-green' : 'badge-red'}">${f.status === 'paid' ? t('fees.statusPaid') : t('fees.statusUnpaid')}</span></td>
+                  <td>
+                    <div class="row-actions">
+                      <button class="icon-btn" title="Toggle Status" onclick="toggleFee(${f.id})">🔁</button>
+                      <button class="icon-btn" title="Edit" onclick="editFee(${f.id})">✏️</button>
+                      <button class="icon-btn danger" title="Delete" onclick="deleteFee(${f.id})">🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch (err) {
+        wrap.innerHTML = `<div class="empty-state">${t('fees.loadError')}</div>`;
+      }
+    }
+
+    document.getElementById('add-btn').addEventListener('click', () => {
+      document.getElementById('modal-title').textContent = t('fees.modalAddTitle');
+      document.getElementById('fee-form').reset();
+      document.getElementById('fee-id').value = '';
+      openModal('fee-modal');
+    });
+
+    function editFee(id) {
+      const f = fees.find((f) => f.id === id);
+      if (!f) return;
+      document.getElementById('modal-title').textContent = t('fees.modalEditTitle');
+      document.getElementById('fee-id').value = f.id;
+      document.getElementById('studentId').value = f.studentId;
+      document.getElementById('term').value = f.term;
+      document.getElementById('amount').value = f.amount;
+      document.getElementById('dueDate').value = f.dueDate;
+      document.getElementById('status').value = f.status;
+      openModal('fee-modal');
+    }
+
+    async function toggleFee(id) {
+      const f = fees.find((f) => f.id === id);
+      if (!f) return;
+      try {
+        await api(`/api/fees/${id}`, { method: 'PUT', body: { status: f.status === 'paid' ? 'unpaid' : 'paid' } });
+        showToast(t('fees.toastToggled'));
+        await loadFees();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    async function deleteFee(id) {
+      if (!confirm(t('fees.confirmDelete'))) return;
+      try {
+        await api(`/api/fees/${id}`, { method: 'DELETE' });
+        showToast(t('fees.toastDeleted'));
+        await loadFees();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    document.getElementById('fee-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('fee-id').value;
+      const payload = {
+        studentId: Number(document.getElementById('studentId').value),
+        term: document.getElementById('term').value.trim(),
+        amount: Number(document.getElementById('amount').value),
+        dueDate: document.getElementById('dueDate').value,
+        status: document.getElementById('status').value,
+      };
+      try {
+        if (id) {
+          await api(`/api/fees/${id}`, { method: 'PUT', body: payload });
+          showToast(t('fees.toastUpdated'));
+        } else {
+          await api('/api/fees', { method: 'POST', body: payload });
+          showToast(t('fees.toastAdded'));
+        }
+        closeModal('fee-modal');
+        await loadFees();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+  </script>
+</body>
+</html>

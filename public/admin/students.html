@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Students — GO-GO Admin</title>
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <div class="topbar">
+        <h1 data-i18n="students.title">Students</h1>
+        <button class="btn btn-primary" id="add-btn" data-i18n="students.addBtn">+ Add Student</button>
+      </div>
+
+      <div class="panel">
+        <div id="table-wrap">
+          <div class="empty-state" data-i18n="students.loading">Loading students…</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="student-modal">
+    <div class="modal">
+      <h3 id="modal-title" data-i18n="students.modalAddTitle">Add Student</h3>
+      <form id="student-form">
+        <input type="hidden" id="student-id" />
+        <div class="form-row">
+          <label for="name" data-i18n="students.labelName">Full Name</label>
+          <input type="text" id="name" required />
+        </div>
+        <div class="form-row">
+          <label for="age" data-i18n="students.labelAge">Age</label>
+          <input type="number" id="age" min="1" max="12" required />
+        </div>
+        <div class="form-row">
+          <label for="classId" data-i18n="students.labelClass">Class</label>
+          <select id="classId" required></select>
+        </div>
+        <div class="form-row">
+          <label for="parentName" data-i18n="students.labelParentName">Parent / Guardian Name</label>
+          <input type="text" id="parentName" required />
+        </div>
+        <div class="form-row">
+          <label for="parentPhone" data-i18n="students.labelParentPhone">Parent Phone</label>
+          <input type="text" id="parentPhone" />
+        </div>
+        <div class="form-row">
+          <label for="parentEmail" data-i18n="students.labelParentEmail">Parent Email</label>
+          <input type="email" id="parentEmail" />
+        </div>
+        <div class="form-row">
+          <label for="enrolledDate" data-i18n="students.labelEnrolledDate">Enrolled Date</label>
+          <input type="date" id="enrolledDate" />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" onclick="closeModal('student-modal')" data-i18n="common.cancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" data-i18n="common.saveBtn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/theme.js"></script>
+  <script src="../js/i18n.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    let students = [];
+    let classes = [];
+
+    (async () => {
+      const user = await requireAuth();
+      if (!user) return;
+      renderSidebar('students.html', user);
+      await loadClasses();
+      await loadStudents();
+      window.onLangChange = async () => { await loadClasses(); await loadStudents(); };
+    })();
+
+    async function loadClasses() {
+      classes = await api('/api/classes');
+      const select = document.getElementById('classId');
+      const current = select.value;
+      select.innerHTML = classes.map((c) => `<option value="${c.id}">${escapeHtml(c.name)} (${escapeHtml(c.ageGroup)})</option>`).join('');
+      if (current) select.value = current;
+    }
+
+    function className(classId) {
+      const c = classes.find((c) => c.id === Number(classId));
+      return c ? c.name : '—';
+    }
+
+    async function loadStudents() {
+      const wrap = document.getElementById('table-wrap');
+      try {
+        students = await api('/api/students');
+        if (!students.length) {
+          wrap.innerHTML = `<div class="empty-state"><div class="emoji">🧒</div>${t('students.empty')}</div>`;
+          return;
+        }
+        wrap.innerHTML = `
+          <table>
+            <thead>
+              <tr><th>${t('students.thName')}</th><th>${t('students.thAge')}</th><th>${t('students.thClass')}</th><th>${t('students.thParent')}</th><th>${t('students.thContact')}</th><th>${t('students.thEnrolled')}</th><th></th></tr>
+            </thead>
+            <tbody>
+              ${students.map((s) => `
+                <tr>
+                  <td><strong>${escapeHtml(s.name)}</strong></td>
+                  <td>${escapeHtml(s.age)}</td>
+                  <td><span class="badge badge-blue">${escapeHtml(className(s.classId))}</span></td>
+                  <td>${escapeHtml(s.parentName)}</td>
+                  <td>${escapeHtml(s.parentPhone || '—')}<br/><span style="color:var(--text);font-size:0.82rem;">${escapeHtml(s.parentEmail || '')}</span></td>
+                  <td>${formatDate(s.enrolledDate)}</td>
+                  <td>
+                    <div class="row-actions">
+                      <button class="icon-btn" title="Edit" onclick="editStudent(${s.id})">✏️</button>
+                      <button class="icon-btn danger" title="Delete" onclick="deleteStudent(${s.id})">🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch (err) {
+        wrap.innerHTML = `<div class="empty-state">${t('students.loadError')}</div>`;
+      }
+    }
+
+    document.getElementById('add-btn').addEventListener('click', () => {
+      document.getElementById('modal-title').textContent = t('students.modalAddTitle');
+      document.getElementById('student-form').reset();
+      document.getElementById('student-id').value = '';
+      document.getElementById('enrolledDate').value = todayISO();
+      openModal('student-modal');
+    });
+
+    function editStudent(id) {
+      const s = students.find((s) => s.id === id);
+      if (!s) return;
+      document.getElementById('modal-title').textContent = t('students.modalEditTitle');
+      document.getElementById('student-id').value = s.id;
+      document.getElementById('name').value = s.name;
+      document.getElementById('age').value = s.age;
+      document.getElementById('classId').value = s.classId;
+      document.getElementById('parentName').value = s.parentName;
+      document.getElementById('parentPhone').value = s.parentPhone || '';
+      document.getElementById('parentEmail').value = s.parentEmail || '';
+      document.getElementById('enrolledDate').value = s.enrolledDate || '';
+      openModal('student-modal');
+    }
+
+    async function deleteStudent(id) {
+      if (!confirm(t('students.confirmDelete'))) return;
+      try {
+        await api(`/api/students/${id}`, { method: 'DELETE' });
+        showToast(t('students.toastDeleted'));
+        await loadStudents();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    document.getElementById('student-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('student-id').value;
+      const payload = {
+        name: document.getElementById('name').value.trim(),
+        age: Number(document.getElementById('age').value),
+        classId: Number(document.getElementById('classId').value),
+        parentName: document.getElementById('parentName').value.trim(),
+        parentPhone: document.getElementById('parentPhone').value.trim(),
+        parentEmail: document.getElementById('parentEmail').value.trim(),
+        enrolledDate: document.getElementById('enrolledDate').value,
+      };
+      try {
+        if (id) {
+          await api(`/api/students/${id}`, { method: 'PUT', body: payload });
+          showToast(t('students.toastUpdated'));
+        } else {
+          await api('/api/students', { method: 'POST', body: payload });
+          showToast(t('students.toastAdded'));
+        }
+        closeModal('student-modal');
+        await loadStudents();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+  </script>
+</body>
+</html>
